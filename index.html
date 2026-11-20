@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AuditCore OS — AI Practice Command Center for CAs</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS CDN for real Excel (.xlsx, .xls) & CSV parsing/generation -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <!-- PDF.js CDN for local browser PDF text extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            obsidian: '#090d16',
+            panel: '#0f172a',
+            panelLight: '#162036',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      background-color: #090d16;
+      color: #f1f5f9;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+    /* Subtle Glow Animations */
+    @keyframes shield-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); }
+      50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    }
+    .shield-active { animation: shield-pulse 2.2s infinite; }
+
+    /* AI Markdown Output Styling */
+    .ai-output h3 { font-size: 0.95rem; font-weight: 700; color: #38bdf8; margin-top: 1rem; margin-bottom: 0.4rem; }
+    .ai-output h4 { font-size: 0.875rem; font-weight: 600; color: #a5b4fc; margin-top: 0.75rem; margin-bottom: 0.25rem; }
+    .ai-output ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.5rem; }
+    .ai-output li { margin-bottom: 0.25rem; }
+    .ai-output strong { color: #f8fafc; }
+    .ai-output p { margin-bottom: 0.5rem; line-height: 1.6; }
+
+    /* Drag-and-Drop Upload Zone */
+    .drop-zone {
+      border: 1.5px dashed #334155;
+      transition: all 0.2s ease;
+    }
+    .drop-zone.drag-over {
+      border-color: #22d3ee;
+      background-color: rgba(34, 211, 238, 0.08);
+      transform: scale(1.005);
+    }
+
+    /* Dedicated Print / PDF Audit Working Paper View */
+    #print-working-paper { display: none; }
+    @media print {
+      body { background: #ffffff !important; color: #0f172a !important; }
+      #app-shell, #toast-container, .modal-overlay { display: none !important; }
+      #print-working-paper {
+        display: block !important;
+        padding: 24px 32px;
+        font-family: 'Inter', system-ui, sans-serif;
+        color: #0f172a;
+        background: #ffffff;
+      }
+      #print-working-paper h1 { font-size: 20px; font-weight: 800; letter-spacing: 0.04em; color: #0f172a; }
+      #print-working-paper h3 { font-size: 14px; font-weight: 700; color: #1e293b; margin-top: 14px; margin-bottom: 6px; }
+      #print-working-paper p, #print-working-paper li { font-size: 12px; line-height: 1.6; color: #1e293b; }
+      #print-working-paper ul { list-style-type: disc; padding-left: 20px; margin-bottom: 8px; }
+    }
+  </style>
+</head>
+<body class="min-h-screen overflow-x-hidden">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ======================================================================= -->
+  <!-- DEDICATED PRINT / PDF AUDIT WORKING PAPER CONTAINER                     -->
+  <!-- ======================================================================= -->
+  <div id="print-working-paper">
+    <div style="border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: flex-end;">
+      <div>
+        <h1>AUDITCORE OS — AUDIT WORKING PAPER</h1>
+        <div style="font-size: 11px; color: #475569; margin-top: 2px;">ICAI AURATHON 2026 • Zero-Hallucination AI Practice Command Center</div>
+      </div>
+      <div style="text-align: right; font-size: 11px; color: #334155;">
+        <div><strong>Ref No.:</strong> <span id="print-ref-no">AC-WP-2026-001</span></div>
+        <div><strong>Date:</strong> <span id="print-date"></span></div>
+      </div>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 11px;">
+      <tr>
+        <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"><strong>Module:</strong> <span id="print-module-name"></span></td>
+        <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"><strong>Prepared By:</strong> Aditya Kumar Singh (CA Intermediate)</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"><strong>CA-Shield Privacy Status:</strong> <span id="print-shield-status"></span></td>
+        <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"><strong>Verification Engine:</strong> Deterministic JS + Gemini AI</td>
+      </tr>
+    </table>
+
+    <div id="print-content" style="min-height: 360px;"></div>
+
+    <div style="margin-top: 36px; border-top: 1px solid #cbd5e1; padding-top: 14px; display: flex; justify-content: space-between; font-size: 11px; color: #475569;">
+      <div>
+        <div><strong>Prepared By:</strong> Aditya Kumar Singh</div>
+        <div style="margin-top: 18px;">Signature: _______________________</div>
+      </div>
+      <div style="text-align: right;">
+        <div><strong>Reviewed By (Partner / FCA):</strong> _______________________</div>
+        <div style="margin-top: 18px;">UDIN / Stamp: _______________________</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MAIN APPLICATION SHELL                                                  -->
+  <!-- ======================================================================= -->
+  <div id="app-shell" class="min-h-screen flex flex-col md:flex-row">
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/65 z-30 hidden md:hidden backdrop-blur-sm"></div>
+
+    <!-- LEFT SIDEBAR NAVIGATION -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-64 bg-[#0b1120] border-r border-slate-800/90 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out shrink-0">
+      <!-- Brand Header -->
+      <div class="h-16 px-5 flex items-center justify-between border-b border-slate-800/90">
+        <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchModule('home')">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-cyan-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-base font-extrabold tracking-tight text-white leading-none">AuditCore <span class="text-cyan-400">OS</span></h1>
+            <p class="text-[10px] text-slate-400 font-semibold mt-0.5 tracking-widest uppercase">CA Command Center</p>
+          </div>
+        </div>
+        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Navigation Items -->
+      <nav class="flex-1 px-3 py-5 space-y-1.5 overflow-y-auto">
+        <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Workspace</p>
+
+        <button onclick="switchModule('home')" id="nav-home" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+          <div>
+            <div class="text-sm font-semibold leading-tight">Command Home</div>
+            <div class="text-[11px] text-slate-400">Overview &amp; Architecture</div>
+          </div>
+        </button>
+
+        <p class="px-3 pt-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Audit &amp; Tax Modules</p>
+
+        <button onclick="switchModule('forensic')" id="nav-forensic" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border border-transparent">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+          <div>
+            <div class="text-sm font-semibold leading-tight">Forensic Radar</div>
+            <div class="text-[11px] text-slate-400">Benford, 40A(3) &amp; 43B(h)</div>
+          </div>
+        </button>
+
+        <button onclick="switchModule('rpt')" id="nav-rpt" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border border-transparent">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/></svg>
+          <div>
+            <div class="text-sm font-semibold leading-tight">RPT-Graph</div>
+            <div class="text-[11px] text-slate-400">SA 550 Shell-Vendor Net</div>
+          </div>
+        </button>
+
+        <button onclick="switchModule('notice')" id="nav-notice" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border border-transparent">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z"/></svg>
+          <div>
+            <div class="text-sm font-semibold leading-tight">NoticeShield</div>
+            <div class="text-[11px] text-slate-400">GST / IT Kill-Switch</div>
+          </div>
+        </button>
+
+        <button onclick="switchModule('sched3')" id="nav-sched3" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border border-transparent">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25M9 16.5v.75m3-3v3M15 12v5.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          <div>
+            <div class="text-sm font-semibold leading-tight">Sched3-XRay</div>
+            <div class="text-[11px] text-slate-400">Schedule III &amp; CARO 2020</div>
+          </div>
+        </button>
+      </nav>
+
+      <!-- Bottom Sidebar Badge -->
+      <div class="p-4 border-t border-slate-800/90">
+        <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-3">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">Zero-Hallucination Engine</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          </div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            Deterministic JS math + Local Privacy Shield + Gemini AI.
+          </p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT WORKSPACE COLUMN -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+      <!-- TOP HEADER BAR -->
+      <header class="sticky top-0 z-20 h-16 bg-[#090d16]/90 backdrop-blur-md border-b border-slate-800/90 px-4 sm:px-6 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <button onclick="toggleMobileSidebar()" class="md:hidden p-2 rounded-lg bg-slate-800/70 text-slate-300 hover:text-white">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="flex items-center gap-2.5 truncate">
+            <h2 id="header-module-title" class="text-sm sm:text-base font-bold text-white truncate">Command Home — Overview &amp; Architecture</h2>
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shrink-0">
+              ICAI AURATHON 2026
+            </span>
+          </div>
+        </div>
+
+        <!-- Right Controls -->
+        <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <!-- CA-Shield Firewall Toggle -->
+          <div class="flex items-center gap-2 bg-[#0f172a] border border-slate-800 px-3 py-1.5 rounded-xl">
+            <div id="shield-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 shield-active shrink-0"></div>
+            <div class="hidden lg:block leading-tight">
+              <div class="text-[11px] font-bold text-white">CA-Shield Firewall</div>
+              <div id="shield-status-text" class="text-[10px] font-semibold text-emerald-400">Local PII Masking ACTIVE</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer ml-1">
+              <input type="checkbox" id="ca-shield-toggle" checked onchange="toggleCAShield()" class="sr-only peer" />
+              <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+            </label>
+          </div>
+
+          <!-- PII Preview Button -->
+          <button onclick="openPIIModal()" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-xs font-semibold text-slate-200 border border-slate-700/80 transition">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span>PII Preview</span>
+          </button>
+
+          <!-- Settings Button -->
+          <button onclick="openSettingsModal()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-xs font-semibold text-slate-200 border border-slate-700/80 transition" title="Settings & Demo Mode">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span class="hidden sm:inline">Settings</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- MAIN CONTENT AREA -->
+      <main class="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
+
+        <!-- =================================================================== -->
+        <!-- PAGE 0: COMMAND HOME (Default Landing View)                         -->
+        <!-- =================================================================== -->
+        <section id="module-home" class="module-section space-y-6">
+          <!-- Hero Banner -->
+          <div class="relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#111c33] to-[#0b1324] border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <div class="absolute -top-24 -right-24 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="relative z-10 max-w-3xl space-y-3">
+              <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                ICAI AURATHON 2026 • Built by Aditya Kumar Singh (CA Intermediate)
+              </span>
+              <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+                Zero-Hallucination AI Practice Command Center for Chartered Accountants
+              </h1>
+              <p class="text-sm sm:text-base text-slate-400 leading-relaxed">
+                AuditCore OS separates <strong class="text-slate-200">deterministic statutory math</strong> from <strong class="text-slate-200">generative AI drafting</strong>, protected by an in-browser PII firewall—built for modern Indian CA firms.
+              </p>
+            </div>
+          </div>
+
+          <!-- 3-Step Architecture Flow -->
+          <div>
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">3-Stage Zero-Hallucination Architecture</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">STEP 1</span>
+                  <span class="text-xs font-semibold text-emerald-400">0% Hallucination</span>
+                </div>
+                <h4 class="text-base font-bold text-white">Local Deterministic Math</h4>
+                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Pure browser JS executes Benford’s Law, Sec 40A(3) cash splits, Sec 43B(h) MSME overdue checks, DIN/Limitation rules, and Schedule III ratios with 100% accuracy.</p>
+              </div>
+
+              <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">STEP 2</span>
+                  <span class="text-xs font-semibold text-emerald-400">100% Confidentiality</span>
+                </div>
+                <h4 class="text-base font-bold text-white">CA-Shield Privacy Firewall</h4>
+                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Automatically detects and masks Client Names, PANs, GSTINs, Bank Accounts, and Phones locally in your browser before any prompt reaches an LLM.</p>
+              </div>
+
+              <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">STEP 3</span>
+                  <span class="text-xs font-semibold text-cyan-400">Print-Ready Output</span>
+                </div>
+                <h4 class="text-base font-bold text-white">Gemini AI Audit Drafting</h4>
+                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Converts verified flags into executive Form 3CD remarks, SA 550 inquiry letters, GST legal replies, and Board-ready Schedule III variance notes.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 Clickable Module Launch Cards -->
+          <div>
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Launch Practice Modules</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <button onclick="switchModule('forensic')" class="group text-left bg-[#0f172a] hover:bg-[#152038] border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-5 transition-all">
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+                </div>
+                <h4 class="text-sm font-bold text-white">Forensic Radar</h4>
+                <p class="text-xs text-slate-400 mt-1">Benford's Law, Sec 40A(3) split cash &amp; Sec 43B(h) MSME scanner.</p>
+                <div class="mt-3 text-xs font-semibold text-indigo-400 group-hover:translate-x-1 transition">Open Module →</div>
+              </button>
+
+              <button onclick="switchModule('rpt')" class="group text-left bg-[#0f172a] hover:bg-[#152038] border border-slate-800 hover:border-rose-500/50 rounded-2xl p-5 transition-all">
+                <div class="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/></svg>
+                </div>
+                <h4 class="text-sm font-bold text-white">RPT-Graph</h4>
+                <p class="text-xs text-slate-400 mt-1">Interactive SA 550 shell-vendor &amp; director fraud network.</p>
+                <div class="mt-3 text-xs font-semibold text-rose-400 group-hover:translate-x-1 transition">Open Module →</div>
+              </button>
+
+              <button onclick="switchModule('notice')" class="group text-left bg-[#0f172a] hover:bg-[#152038] border border-slate-800 hover:border-amber-500/50 rounded-2xl p-5 transition-all">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z"/></svg>
+                </div>
+                <h4 class="text-sm font-bold text-white">NoticeShield</h4>
+                <p class="text-xs text-slate-400 mt-1">GST / IT DIN verification, Sec 73/74 time-bar &amp; reply drafter.</p>
+                <div class="mt-3 text-xs font-semibold text-amber-400 group-hover:translate-x-1 transition">Open Module →</div>
+              </button>
+
+              <button onclick="switchModule('sched3')" class="group text-left bg-[#0f172a] hover:bg-[#152038] border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-5 transition-all">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25M9 16.5v.75m3-3v3M15 12v5.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                </div>
+                <h4 class="text-sm font-bold text-white">Sched3-XRay</h4>
+                <p class="text-xs text-slate-400 mt-1">Schedule III ±25% ratio variance &amp; CARO 2020 arrears audit.</p>
+                <div class="mt-3 text-xs font-semibold text-emerald-400 group-hover:translate-x-1 transition">Open Module →</div>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- MODULE 1: FORENSIC RADAR                                            -->
+        <!-- =================================================================== -->
+        <section id="module-forensic" class="module-section hidden space-y-6">
+          <!-- Step 1: Drag & Drop Excel/CSV Upload -->
+          <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">STEP 1</span>
+                  <h3 class="text-base font-bold text-white">Upload Company Ledger (Excel / CSV)</h3>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Smart column detection supports <code class="text-cyan-300">Date/Voucher Date, Party/Ledger, Mode, Amount/Debit, MSME_Days</code> (or Invoice &amp; Payment Dates). 100% local in browser.</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="downloadLedgerTemplate()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                  <span>Download Template (.xlsx)</span>
+                </button>
+                <!-- HIDDEN DEMO BUTTON -->
+                <button onclick="loadDemoLedger()" class="demo-only hidden px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-semibold shadow-lg shadow-indigo-500/20 transition">
+                  ⚡ Load Sample Ledger
+                </button>
+              </div>
+            </div>
+
+            <label id="drop-forensic" class="drop-zone flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-xl bg-[#090d16] cursor-pointer hover:border-cyan-500/60">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/15 text-cyan-400 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                </div>
+                <div>
+                  <div class="text-xs sm:text-sm font-semibold text-white">Drag &amp; drop Tally / Ledger file here, or <span class="text-cyan-400 underline">browse</span></div>
+                  <div id="forensic-file-status" class="text-[11px] text-slate-400 mt-0.5">Supports .xlsx, .xls, and .csv files</div>
+                </div>
+              </div>
+              <span class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-700 shrink-0">Choose File</span>
+              <input type="file" accept=".xlsx,.xls,.csv" onchange="if(this.files[0]) handleLedgerFile(this.files[0])" class="hidden" />
+            </label>
+          </div>
+
+          <!-- Step 2: KPI Cards + Benford Chart + Flags Table -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">STEP 2</span>
+              <h3 class="text-sm font-bold text-white">Deterministic Forensic Flags &amp; Benford's Law Chart</h3>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-4">
+                <p class="text-xs text-slate-400">Total Transactions</p>
+                <p id="kpi-total-tx" class="text-2xl font-extrabold text-white mt-1">0</p>
+              </div>
+              <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-4">
+                <p class="text-xs text-slate-400">High-Risk Flags</p>
+                <p id="kpi-flags" class="text-2xl font-extrabold text-rose-400 mt-1">0</p>
+              </div>
+              <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-4">
+                <p class="text-xs text-slate-400">Disallowance Exposure</p>
+                <p id="kpi-exposure" class="text-2xl font-extrabold text-amber-400 mt-1">₹0</p>
+              </div>
+              <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-4">
+                <p class="text-xs text-slate-400">Compliance Score</p>
+                <p id="kpi-score" class="text-2xl font-extrabold text-emerald-400 mt-1">--%</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <!-- Benford Chart -->
+              <div class="lg:col-span-5 bg-[#0f172a] border border-slate-800 rounded-2xl p-5 flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 class="text-sm font-bold text-white">Benford's Law First-Digit Analysis</h4>
+                    <p class="text-[11px] text-slate-400">Expected % (Line) vs Actual % (Bars)</p>
+                  </div>
+                  <span id="benford-badge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-800 text-slate-400">AWAITING DATA</span>
+                </div>
+                <div class="relative flex-1 min-h-[240px] w-full">
+                  <canvas id="benfordChart"></canvas>
+                </div>
+              </div>
+
+              <!-- Red Flag Table -->
+              <div class="lg:col-span-7 bg-[#0f172a] border border-slate-800 rounded-2xl p-5 flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="text-sm font-bold text-white">Automated Forensic Red-Flag Register</h4>
+                  <span id="flag-count-pill" class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30">0 Flags</span>
+                </div>
+                <div class="overflow-x-auto flex-1 max-h-[260px] overflow-y-auto">
+                  <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 bg-[#0f172a] border-b border-slate-800 text-[11px] uppercase text-slate-400">
+                      <tr>
+                        <th class="py-2 px-3">Date</th>
+                        <th class="py-2 px-3">Party / Ledger</th>
+                        <th class="py-2 px-3">Amount (₹)</th>
+                        <th class="py-2 px-3">Rule Triggered</th>
+                      </tr>
+                    </thead>
+                    <tbody id="forensic-flags-body" class="text-xs divide-y divide-slate-800/70">
+                      <tr><td colspan="4" class="py-10 text-center text-slate-500">Upload a ledger CSV in Step 1 to run forensic checks.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: AI Form 3CD Working Paper -->
+          <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">STEP 3</span>
+                <h4 class="text-sm font-bold text-white">AI Form 3CD Working Paper Drafter</h4>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="generateForensicWP()" id="btn-gen-forensic" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-lg shadow-emerald-600/20">
+                  Generate Form 3CD Working Paper
+                </button>
+                <button onclick="copyAIOutput('forensic-ai-output')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700">Copy</button>
+                <button onclick="printWorkingPaper('Forensic Radar — Form 3CD Working Paper', 'forensic-ai-output')" class="px-3 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-xs font-semibold text-indigo-300 border border-indigo-500/40">Print / Save PDF</button>
+              </div>
+            </div>
+            <div id="forensic-ai-output" class="ai-output bg-[#090d16] border border-slate-800 rounded-xl p-4 text-xs sm:text-sm text-slate-300 min-h-[120px] max-h-[360px] overflow-y-auto">
+              <span class="text-slate-500 italic">Click "Generate Form 3CD Working Paper" after scanning a ledger...</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- MODULE 2: RPT-GRAPH (SA 550 Shell-Vendor Network)                   -->
+        <!-- =================================================================== -->
+        <section id="module-rpt" class="module-section hidden space-y-6">
+          <!-- Step 1: Drag & Drop Workbook or Separate Files -->
+          <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">STEP 1</span>
+                  <h3 class="text-base font-bold text-white">Upload Vendor &amp; Director/Employee Masters</h3>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Drop a single <code class="text-cyan-300">.xlsx</code> workbook with sheets <strong>Vendors</strong> &amp; <strong>Employees</strong>, or upload two separate CSV/Excel files.</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="downloadRPTTemplate()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                  <span>Download Template (.xlsx)</span>
+                </button>
+                <button onclick="loadDemoRPT()" class="demo-only hidden px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-semibold shadow-lg shadow-indigo-500/20 transition">
+                  ⚡ Load Sample Vendors &amp; Directors
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+              <label id="drop-rpt-workbook" class="drop-zone lg:col-span-6 flex items-center justify-between gap-3 p-3.5 rounded-xl bg-[#090d16] cursor-pointer hover:border-cyan-500/60">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-9 h-9 rounded-lg bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                  </div>
+                  <div class="truncate">
+                    <div class="text-xs font-semibold text-white truncate">Combined Workbook (.xlsx / .xls)</div>
+                    <div id="rpt-wb-status" class="text-[11px] text-slate-400 truncate">Sheets: "Vendors" &amp; "Employees"</div>
+                  </div>
+                </div>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-200 text-[11px] font-semibold border border-slate-700 shrink-0">Upload</span>
+                <input type="file" accept=".xlsx,.xls" onchange="if(this.files[0]) handleRPTWorkbook(this.files[0])" class="hidden" />
+              </label>
+
+              <label class="drop-zone lg:col-span-3 flex items-center justify-between gap-2 p-3.5 rounded-xl bg-[#090d16] cursor-pointer hover:border-cyan-500/60">
+                <div class="truncate">
+                  <div class="text-xs font-semibold text-white">1. Vendors File</div>
+                  <div id="rpt-v-status" class="text-[11px] text-slate-400 truncate">.xlsx / .csv</div>
+                </div>
+                <input type="file" accept=".xlsx,.xls,.csv" onchange="if(this.files[0]) handleRPTSeparateFile('vendors', this.files[0])" class="hidden" />
+              </label>
+
+              <label class="drop-zone lg:col-span-3 flex items-center justify-between gap-2 p-3.5 rounded-xl bg-[#090d16] cursor-pointer hover:border-cyan-500/60">
+                <div class="truncate">
+                  <div class="text-xs font-semibold text-white">2. Employees File</div>
+                  <div id="rpt-e-status" class="text-[11px] text-slate-400 truncate">.xlsx / .csv</div>
+                </div>
+                <input type="file" accept=".xlsx,.xls,.csv" onchange="if(this.files[0]) handleRPTSeparateFile('employees', this.files[0])" class="hidden" />
+              </label>
+            </div>
+          </div>
+
+          <!-- Step 2: Interactive Graph + Risk Register -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-8 bg-[#0f172a] border border-slate-800 rounded-2xl p-4 flex flex-col">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">STEP 2</span>
+                  <h4 class="text-sm font-bold text-white">Interactive Shell-Vendor Network Graph</h4>
+                </div>
+                <div class="flex items-center gap-3 text-[11px]">
+                  <span class="flex items-center gap-1.5 text-sky-400"><span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>Director/Emp</span>
+                  <span class="flex items-center gap-1.5 text-emerald-400"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>Clean Vendor</span>
+                  <span class="flex items-center gap-1.5 text-rose-400"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>Fraud/RPT Link</span>
+                </div>
+              </div>
+              <div id="rpt-canvas-wrap" class="relative w-full h-[350px] bg-[#060911] rounded-xl border border-slate-800 overflow-hidden">
+                <canvas id="rptCanvas" class="w-full h-full cursor-pointer"></canvas>
+                <div id="rpt-empty-msg" class="absolute inset-0 flex items-center justify-center text-slate-500 text-xs px-4 text-center pointer-events-none">
+                  Upload Vendor &amp; Director master files in Step 1 to render the entity network.
+                </div>
+              </div>
+            </div>
+
+            <div class="lg:col-span-4 bg-[#0f172a] border border-slate-800 rounded-2xl p-5 flex flex-col justify-between gap-4">
+              <div>
+                <h4 class="text-sm font-bold text-white mb-2">Node Inspector</h4>
+                <div id="rpt-inspector" class="bg-[#090d16] border border-slate-800 rounded-xl p-3.5 text-xs text-slate-300 space-y-1.5 min-h-[135px]">
+                  <p class="text-slate-500 italic">Click any node in the graph to inspect Bank A/c, Phone &amp; Address.</p>
+                </div>
+              </div>
+              <div>
+                <h5 class="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2">Exposed Conflict Register</h5>
+                <ul id="rpt-conflicts-list" class="space-y-2 text-xs max-h-[145px] overflow-y-auto">
+                  <li class="text-slate-500 italic">No conflicts detected yet.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: SA 550 Memo -->
+          <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">STEP 3</span>
+                <h4 class="text-sm font-bold text-white">AI SA 550 Risk Memo &amp; Management Inquiry Letter</h4>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="generateRPTMemo()" id="btn-gen-rpt" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition">Draft SA 550 Risk Memo</button>
+                <button onclick="copyAIOutput('rpt-ai-output')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700">Copy</button>
+                <button onclick="printWorkingPaper('RPT-Graph — SA 550 Related Party Risk Memo', 'rpt-ai-output')" class="px-3 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-xs font-semibold text-indigo-300 border border-indigo-500/40">Print / Save PDF</button>
+              </div>
+            </div>
+            <div id="rpt-ai-output" class="ai-output bg-[#090d16] border border-slate-800 rounded-xl p-4 text-xs sm:text-sm text-slate-300 min-h-[110px] max-h-[340px] overflow-y-auto">
+              <span class="text-slate-500 italic">SA 550 Audit Risk Memo will appear here...</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- MODULE 3: NOTICESHIELD (GST / IT Notice Kill-Switch)                -->
+        <!-- =================================================================== -->
+        <section id="module-notice" class="module-section hidden space-y-6">
+          <!-- Step 1: Drag & Drop PDF Upload -->
+          <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">STEP 1</span>
+                  <h3 class="text-base font-bold text-white">Upload GST / Income Tax Notice PDF (or Paste Text)</h3>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">PDF.js extracts multi-page notice text 100% locally in your browser and runs instant DIN, Time-Bar &amp; Math checks.</p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button onclick="loadDemoNotice('gst')" class="demo-only hidden px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition">⚡ Load Time-Barred GST ASMT-10</button>
+                <button onclick="loadDemoNotice('it')" class="demo-only hidden px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition">⚡ Load Missing-DIN IT Notice</button>
+              </div>
+            </div>
+
+            <label id="drop-notice-pdf" class="drop-zone flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-xl bg-[#090d16] cursor-pointer hover:border-amber-500/60">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                </div>
+                <div>
+                  <div class="text-xs sm:text-sm font-semibold text-white">Drag &amp; drop GST ASMT-10 / DRC-01 or IT Notice PDF, or <span class="text-amber-400 underline">browse</span></div>
+                  <div id="notice-pdf-status" class="text-[11px] text-slate-400 mt-0.5">Supports multi-page .pdf files — zero server upload</div>
+                </div>
+              </div>
+              <span class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-700 shrink-0">Upload PDF</span>
+              <input type="file" accept=".pdf,application/pdf" onchange="if(this.files[0]) handleNoticePDF(this.files[0])" class="hidden" />
+            </label>
+          </div>
+
+          <!-- Step 2: Notice Input + Kill-Switch Diagnostics -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-7 bg-[#0f172a] border border-slate-800 rounded-2xl p-5 flex flex-col">
+              <label class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Statutory Notice Text</label>
+              <textarea id="notice-input" oninput="runNoticeKillSwitch()" rows="10" placeholder="Paste GST ASMT-10 / DRC-01 or Income Tax Sec 143(2) / 148A notice text here..." class="w-full bg-[#090d16] border border-slate-800 focus:border-indigo-500 focus:outline-none rounded-xl p-3.5 text-xs sm:text-sm text-slate-200 font-mono leading-relaxed"></textarea>
+            </div>
+
+            <div class="lg:col-span-5 bg-[#0f172a] border border-slate-800 rounded-2xl p-5 flex flex-col justify-between gap-4">
+              <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">STEP 2</span>
+                  <h4 class="text-sm font-bold text-white">Technical Kill-Switch Diagnostics</h4>
+                </div>
+
+                <div class="bg-[#090d16] border border-slate-800 rounded-xl p-3.5 flex items-center justify-between gap-2">
+                  <div>
+                    <div class="text-xs font-bold text-slate-200">Mandatory DIN Verification</div>
+                    <div id="din-detail" class="text-[11px] text-slate-400">CBIC / CBDT Circular 19/2019</div>
+                  </div>
+                  <span id="din-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">PENDING</span>
+                </div>
+
+                <div class="bg-[#090d16] border border-slate-800 rounded-xl p-3.5 flex items-center justify-between gap-2">
+                  <div>
+                    <div class="text-xs font-bold text-slate-200">Statutory Limitation (Sec 73/74)</div>
+                    <div id="timebar-detail" class="text-[11px] text-slate-400">Checks time-barred FY deadlines</div>
+                  </div>
+                  <span id="timebar-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">PENDING</span>
+                </div>
+
+                <div class="bg-[#090d16] border border-slate-800 rounded-xl p-3.5 flex items-center justify-between gap-2">
+                  <div>
+                    <div class="text-xs font-bold text-slate-200">Tax &amp; Interest Math Audit</div>
+                    <div id="math-detail" class="text-[11px] text-slate-400">Verifies arithmetic total of demand</div>
+                  </div>
+                  <span id="math-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">PENDING</span>
+                </div>
+              </div>
+
+              <button onclick="generateNoticeReply()" id="btn-gen-notice" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-lg shadow-emerald-600/20">
+                Draft Point-by-Point Legal Reply &amp; Checklist
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 3: Legal Reply -->
+          <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">STEP 3</span>
+                <h4 class="text-sm font-bold text-white">AI Legal Reply &amp; Client Evidence Checklist</h4>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="copyAIOutput('notice-ai-output')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700">Copy</button>
+                <button onclick="printWorkingPaper('NoticeShield — Preliminary Legal Reply', 'notice-ai-output')" class="px-3 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-xs font-semibold text-indigo-300 border border-indigo-500/40">Print / Save PDF</button>
+              </div>
+            </div>
+            <div id="notice-ai-output" class="ai-output bg-[#090d16] border border-slate-800 rounded-xl p-4 text-xs sm:text-sm text-slate-300 min-h-[120px] max-h-[360px] overflow-y-auto">
+              <span class="text-slate-500 italic">Your formal legal reply citing CGST / Income Tax provisions will appear here...</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- MODULE 4: SCHED3-XRAY (Schedule III ±25% & CARO 2020)               -->
+        <!-- =================================================================== -->
+        <section id="module-sched3" class="module-section hidden space-y-6">
+          <!-- Step 1: Drag & Drop Excel/CSV Upload -->
+          <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">STEP 1</span>
+                  <h3 class="text-base font-bold text-white">Upload 2-Year Financials &amp; Statutory Dues (Excel / CSV)</h3>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Computes Schedule III mandatory ratios (±25% threshold) and audits CARO 2020 Clause 3(vii)(a) dues (&gt; 6 months).</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="downloadSched3Template()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                  <span>Download Template (.xlsx)</span>
+                </button>
+                <button onclick="loadDemoSched3()" class="demo-only hidden px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-semibold shadow-lg shadow-indigo-500/20 transition">
+                  ⚡ Load Sample 2-Year Financials
+                </button>
+              </div>
+            </div>
+
+            <label id="drop-sched3" class="drop-zone flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-xl bg-[#090d16] cursor-pointer hover:border-emerald-500/60">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                </div>
+                <div>
+                  <div class="text-xs sm:text-sm font-semibold text-white">Drag &amp; drop 2-Year Financials workbook here, or <span class="text-emerald-400 underline">browse</span></div>
+                  <div id="sched3-file-status" class="text-[11px] text-slate-400 mt-0.5">Supports .xlsx, .xls, and .csv (Sheets: "Ratios" &amp; "CARO_Dues")</div>
+                </div>
+              </div>
+              <span class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-700 shrink-0">Choose File</span>
+              <input type="file" accept=".xlsx,.xls,.csv" onchange="if(this.files[0]) handleSched3File(this.files[0])" class="hidden" />
+            </label>
+          </div>
+
+          <!-- Step 2: Ratios Table + CARO 2020 -->
+          <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">STEP 2</span>
+              <h4 class="text-sm font-bold text-white">Schedule III Analytical Ratios (FY 2024-25 vs FY 2025-26)</h4>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead class="border-b border-slate-800 text-[11px] uppercase text-slate-400">
+                  <tr>
+                    <th class="py-2.5 px-3">Mandatory Ratio</th>
+                    <th class="py-2.5 px-3">FY 2024-25</th>
+                    <th class="py-2.5 px-3">FY 2025-26</th>
+                    <th class="py-2.5 px-3">% Variance</th>
+                    <th class="py-2.5 px-3">Compliance Status</th>
+                  </tr>
+                </thead>
+                <tbody id="sched3-ratios-body" class="text-xs sm:text-sm divide-y divide-slate-800/70">
+                  <tr><td colspan="5" class="py-8 text-center text-slate-500">Upload 2-year financials in Step 1 to compute Schedule III ratios.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-bold text-white">CARO 2020 Clause 3(vii)(a) — Undisputed Statutory Dues (&gt; 6 Months)</h4>
+              <span id="caro-badge" class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-800 text-slate-400">AWAITING DATA</span>
+            </div>
+            <div id="caro-dues-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              <div class="bg-[#090d16] border border-slate-800 rounded-xl p-3 text-slate-500 italic col-span-full">No statutory dues data loaded yet.</div>
+            </div>
+          </div>
+
+          <!-- Step 3: Board-Ready Notes -->
+          <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">STEP 3</span>
+                <h4 class="text-sm font-bold text-white">Board-Ready Variance Explanations &amp; CARO 2020 Note</h4>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="generateSched3Note()" id="btn-gen-sched3" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition">Generate Board-Ready Note</button>
+                <button onclick="copyAIOutput('sched3-ai-output')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700">Copy</button>
+                <button onclick="printWorkingPaper('Sched3-XRay — Schedule III & CARO 2020 Notes', 'sched3-ai-output')" class="px-3 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-xs font-semibold text-indigo-300 border border-indigo-500/40">Print / Save PDF</button>
+              </div>
+            </div>
+            <div id="sched3-ai-output" class="ai-output bg-[#090d16] border border-slate-800 rounded-xl p-4 text-xs sm:text-sm text-slate-300 min-h-[120px] max-h-[360px] overflow-y-auto">
+              <span class="text-slate-500 italic">Board-ready Schedule III variance notes &amp; CARO 2020 reporting paragraph will appear here...</span>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL 1: PII PREVIEW (LIVE BEFORE VS AFTER MASKING)                     -->
+  <!-- ======================================================================= -->
+  <div id="pii-modal" class="modal-overlay fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[#0f172a] border border-slate-700 rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+          <h3 class="text-base font-bold text-white">CA-Shield Firewall — Live Before vs. After PII Masking</h3>
+        </div>
+        <button onclick="closePIIModal()" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
+      </div>
+      <p class="text-xs text-slate-400">
+        All PANs, GSTINs, Bank Account Numbers, Phone Numbers, and Client Names are masked <strong>locally in your browser</strong> before any data is sent to Gemini AI, then restored locally on screen.
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <div class="text-[11px] font-bold text-rose-400 uppercase tracking-wider mb-1.5">Before Masking (Local Client Data)</div>
+          <pre id="pii-before-box" class="bg-[#090d16] border border-rose-500/30 rounded-xl p-3.5 text-xs text-slate-300 font-mono max-h-[260px] overflow-y-auto whitespace-pre-wrap"></pre>
+        </div>
+        <div>
+          <div class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider mb-1.5">After Masking (Safe Payload Sent to AI)</div>
+          <pre id="pii-after-box" class="bg-[#090d16] border border-emerald-500/30 rounded-xl p-3.5 text-xs text-emerald-300 font-mono max-h-[260px] overflow-y-auto whitespace-pre-wrap"></pre>
+        </div>
+      </div>
+      <div class="flex justify-end">
+        <button onclick="closePIIModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL 2: SETTINGS & HIDDEN DEMO MODE                                    -->
+  <!-- ======================================================================= -->
+  <div id="settings-modal" class="modal-overlay fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[#0f172a] border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">⚙️ AuditCore OS Settings</h3>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
+      </div>
+
+      <!-- Hidden Demo Mode Toggle -->
+      <div class="bg-[#090d16] border border-slate-800 rounded-xl p-4 space-y-3">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <div class="text-sm font-bold text-white">Run Demo Mode</div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Enable sample data triggers across all modules for live demos &amp; video walkthroughs.</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer shrink-0">
+            <input type="checkbox" id="demo-mode-toggle" onchange="toggleDemoMode()" class="sr-only peer" />
+            <div class="w-10 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
+          </label>
+        </div>
+
+        <!-- Auto-Load All 4 Modules Button (Only visible when Demo Mode is ON) -->
+        <button id="btn-autoload-all" onclick="autoLoadAllDemoModules()" class="hidden w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-bold shadow-lg shadow-cyan-500/20 transition">
+          ⚡ Auto-Load All 4 Modules with Demo Data
+        </button>
+      </div>
+
+      <!-- Gemini API Key -->
+      <div class="space-y-2">
+        <label class="text-xs font-bold text-slate-200">Gemini API Key (Optional)</label>
+        <input type="password" id="api-key-input" placeholder="AIzaSy... (Leave blank for instant offline CA drafts)" class="w-full bg-[#090d16] border border-slate-700 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none" />
+        <p class="text-[11px] text-slate-400">Uses <code class="text-cyan-300">gemini-2.5-flash</code> when a key is provided. Without a key, AuditCore OS seamlessly uses high-accuracy offline CA working paper templates so live demos never fail.</p>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300">Close</button>
+        <button onclick="saveSettings()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- APPLICATION JAVASCRIPT                                                  -->
+  <!-- ======================================================================= -->
+  <script>
+    // Configure PDF.js Web Worker
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    // =========================================================================
+    // 1. GLOBAL STATE & DRAG-AND-DROP HELPERS
+    // =========================================================================
+    let caShieldEnabled = true;
+    let demoModeEnabled = false;
+    let customApiKey = localStorage.getItem('auditcore_gemini_key') || "";
+    let benfordChart = null;
+    let separateRPTVendors = [];
+    let separateRPTEmployees = [];
+
+    let currentLedgerFlags = [];
+    let currentRPTData = { nodes: [], edges: [], conflicts: [] };
+    let currentNoticeDiag = { hasDIN: true, timeBarred: false, mathErr: false };
+    let currentSched3Data = { ratios: [], caroDues: [] };
+
+    const moduleTitles = {
+      home: 'Command Home — Overview & Architecture',
+      forensic: 'Forensic Radar — Benford, Sec 40A(3) & 43B(h)',
+      rpt: 'RPT-Graph — SA 550 Shell-Vendor Network',
+      notice: 'NoticeShield — GST / IT Notice Kill-Switch',
+      sched3: 'Sched3-XRay — Schedule III & CARO 2020'
+    };
+
+    // Helper: Toast Notification (Never uses alert/confirm)
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const colors = {
+        success: 'bg-emerald-950/95 border-emerald-500/50 text-emerald-200',
+        warn: 'bg-amber-950/95 border-amber-500/50 text-amber-200',
+        error: 'bg-rose-950/95 border-rose-500/50 text-rose-200',
+        info: 'bg-slate-900/95 border-cyan-500/50 text-cyan-200'
+      };
+      const el = document.createElement('div');
+      el.className = `pointer-events-auto px-4 py-2.5 rounded-xl border text-xs font-semibold shadow-xl backdrop-blur-md transition-all ${colors[type] || colors.info}`;
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3200);
+    }
+
+    // Helper: Bind drag-and-drop listeners to any upload zone
+    function setupDropZone(zoneId, onFile) {
+      const el = document.getElementById(zoneId);
+      if (!el) return;
+      ['dragenter', 'dragover'].forEach(evt => {
+        el.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); el.classList.add('drag-over'); });
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        el.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); el.classList.remove('drag-over'); });
+      });
+      el.addEventListener('drop', e => {
+        const file = e.dataTransfer?.files?.[0];
+        if (file) onFile(file);
+      });
+    }
+
+    // Helper: Parse Excel serial date or date string into YYYY-MM-DD
+    function normalizeDate(val) {
+      if (!val) return '';
+      if (typeof val === 'number') {
+        const d = new Date(Math.round((val - 25569) * 86400 * 1000));
+        return isNaN(d.getTime()) ? String(val) : d.toISOString().slice(0, 10);
+      }
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? String(val).trim() : d.toISOString().slice(0, 10);
+    }
+
+    // Helper: Smart column value extractor (case-insensitive partial match)
+    function pickCol(row, aliases) {
+      const keys = Object.keys(row);
+      for (const alias of aliases) {
+        const match = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === alias.toLowerCase().replace(/[^a-z0-9]/g, ''));
+        if (match !== undefined && row[match] !== '') return row[match];
+      }
+      for (const alias of aliases) {
+        const match = keys.find(k => k.toLowerCase().includes(alias.toLowerCase()));
+        if (match !== undefined && row[match] !== '') return row[match];
+      }
+      return '';
+    }
+
+    function formatINR(num) {
+      return '₹' + Number(num).toLocaleString('en-IN');
+    }
+
+    function toggleMobileSidebar() {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+      document.getElementById('sidebar-backdrop').classList.toggle('hidden');
+    }
+
+    function switchModule(id) {
+      document.querySelectorAll('.module-section').forEach(s => s.classList.add('hidden'));
+      document.getElementById(`module-${id}`).classList.remove('hidden');
+      document.getElementById('header-module-title').textContent = moduleTitles[id];
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.className = 'nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border border-transparent';
+      });
+      document.getElementById(`nav-${id}`).className = 'nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all bg-indigo-500/15 text-indigo-300 border border-indigo-500/30';
+
+      if (window.innerWidth < 768) toggleMobileSidebar();
+      if (id === 'rpt' && currentRPTData.nodes.length > 0) setTimeout(() => drawRPTGraph(), 60);
+    }
+
+    // =========================================================================
+    // 2. CA-SHIELD PRIVACY FIREWALL (LOCAL PII MASKING & UNMASKING)
+    // =========================================================================
+    function toggleCAShield() {
+      caShieldEnabled = document.getElementById('ca-shield-toggle').checked;
+      const dot = document.getElementById('shield-dot');
+      const txt = document.getElementById('shield-status-text');
+      if (caShieldEnabled) {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shield-active shrink-0';
+        txt.textContent = 'Local PII Masking ACTIVE';
+        txt.className = 'text-[10px] font-semibold text-emerald-400';
+        showToast('CA-Shield Firewall ENABLED — PII masked locally.', 'success');
+      } else {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0';
+        txt.textContent = 'Privacy Masking PAUSED';
+        txt.className = 'text-[10px] font-semibold text-amber-400';
+        showToast('CA-Shield Firewall paused.', 'warn');
+      }
+    }
+
+    function maskPII(text) {
+      const map = {};
+      let counter = 1;
+      const replaceToken = (prefix, match) => {
+        const key = `[${prefix}_${counter++}]`;
+        map[key] = match;
+        return key;
+      };
+      let masked = text
+        .replace(/\b\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]\b/g, m => replaceToken('GSTIN', m))
+        .replace(/\b[A-Z]{5}\d{4}[A-Z]\b/g, m => replaceToken('PAN', m))
+        .replace(/\b\d{11,16}\b/g, m => replaceToken('BANK_AC', m))
+        .replace(/\b[6-9]\d{9}\b/g, m => replaceToken('PHONE', m))
+        .replace(/(Navbharat Manufacturing Pvt Ltd|Rajesh Verma|Ananya Sharma|Shakti Logistics Pvt Ltd|Verma Advisory Enterprises)/g, m => replaceToken('ENTITY', m));
+      return { masked, map };
+    }
+
+    function unmaskPII(text, map) {
+      let restored = text;
+      Object.entries(map).forEach(([token, original]) => {
+        restored = restored.split(token).join(original);
+      });
+      return restored;
+    }
+
+    function openPIIModal() {
+      const sample = `Client: Navbharat Manufacturing Pvt Ltd\nGSTIN: 09AABCN4512K1Z5 | PAN: AABCN4512K\nDirector: Rajesh Verma | Phone: 9839011223\nMatched Bank A/c: 50100234981234\nVendor: Shakti Logistics Pvt Ltd`;
+      const { masked } = maskPII(sample);
+      document.getElementById('pii-before-box').textContent = sample;
+      document.getElementById('pii-after-box').textContent = caShieldEnabled ? masked : '(CA-Shield is currently OFF — raw client PII would be exposed!)';
+      document.getElementById('pii-modal').classList.remove('hidden');
+    }
+
+    function closePIIModal() {
+      document.getElementById('pii-modal').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // 3. SETTINGS & HIDDEN DEMO MODE
+    // =========================================================================
+    function openSettingsModal() {
+      document.getElementById('api-key-input').value = customApiKey;
+      document.getElementById('demo-mode-toggle').checked = demoModeEnabled;
+      document.getElementById('btn-autoload-all').classList.toggle('hidden', !demoModeEnabled);
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function toggleDemoMode() {
+      demoModeEnabled = document.getElementById('demo-mode-toggle').checked;
+      document.querySelectorAll('.demo-only').forEach(el => el.classList.toggle('hidden', !demoModeEnabled));
+      document.getElementById('btn-autoload-all').classList.toggle('hidden', !demoModeEnabled);
+      showToast(demoModeEnabled ? 'Demo Mode ENABLED — sample buttons unlocked.' : 'Demo Mode DISABLED — production view active.', 'info');
+    }
+
+    function autoLoadAllDemoModules() {
+      loadDemoLedger();
+      loadDemoRPT();
+      loadDemoNotice('gst');
+      loadDemoSched3();
+      closeSettingsModal();
+      showToast('All 4 modules populated with demo data!', 'success');
+    }
+
+    function saveSettings() {
+      customApiKey = document.getElementById('api-key-input').value.trim();
+      localStorage.setItem('auditcore_gemini_key', customApiKey);
+      closeSettingsModal();
+      showToast(customApiKey ? 'Gemini API key saved locally!' : 'Settings saved (Offline CA draft mode active).', 'success');
+    }
+
+    // =========================================================================
+    // 4. AI DRAFTING ENGINE, CLIPBOARD & PRINT / PDF EXPORT
+    // =========================================================================
+    function renderMarkdown(md) {
+      return md
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/^- (.*$)/gim, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+        .replace(/\n{2,}/g, '<p></p>');
+    }
+
+    async function runAIDraft(systemPrompt, rawPayload, outputId, btnId, fallbackFn) {
+      const outEl = document.getElementById(outputId);
+      const btn = document.getElementById(btnId);
+      const origTxt = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Drafting...';
+      outEl.innerHTML = '<div class="text-cyan-400 animate-pulse">Running CA-Shield masking &amp; generating audit draft...</div>';
+
+      const { masked, map } = caShieldEnabled ? maskPII(rawPayload) : { masked: rawPayload, map: {} };
+
+      try {
+        if (!customApiKey) {
+          await new Promise(r => setTimeout(r, 550));
+          outEl.innerHTML = renderMarkdown(fallbackFn());
+          showToast('Audit draft generated (Instant Offline CA Mode).', 'success');
+          return;
+        }
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(customApiKey)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ parts: [{ text: masked }] }]
+          })
+        });
+        if (!res.ok) throw new Error('Gemini API error');
+        const data = await res.json();
+        const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || fallbackFn();
+        outEl.innerHTML = renderMarkdown(caShieldEnabled ? unmaskPII(aiText, map) : aiText);
+        showToast('Live Gemini AI draft generated & unmasked locally!', 'success');
+      } catch (err) {
+        outEl.innerHTML = renderMarkdown(fallbackFn());
+        showToast('API unavailable — switched seamlessly to offline CA draft.', 'warn');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = origTxt;
+      }
+    }
+
+    function copyAIOutput(outputId) {
+      const text = document.getElementById(outputId).innerText.trim();
+      if (!text) return;
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      showToast('Copied to clipboard!', 'success');
+    }
+
+    function printWorkingPaper(moduleTitle, outputId) {
+      const html = document.getElementById(outputId).innerHTML;
+      document.getElementById('print-ref-no').textContent = 'AC-WP-' + Date.now().toString().slice(-6);
+      document.getElementById('print-date').textContent = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      document.getElementById('print-module-name').textContent = moduleTitle;
+      document.getElementById('print-shield-status').textContent = caShieldEnabled ? 'ACTIVE (Local PII Masking Verified)' : 'DISABLED';
+      document.getElementById('print-content').innerHTML = html;
+      window.print();
+    }
+
+    // =========================================================================
+    // 5. MODULE 1: FORENSIC RADAR (REAL EXCEL/CSV + SMART COLUMN DETECTION)
+    // =========================================================================
+    function downloadLedgerTemplate() {
+      const sampleRows = [
+        { Voucher_Date: '2026-01-05', Party_Ledger: 'Bharat Logistics Pvt Ltd', Payment_Mode: 'NEFT', Amount: 145200, Vendor_Type: 'Non-MSME', MSME_Days: 12 },
+        { Voucher_Date: '2026-01-08', Party_Ledger: 'Shree Ganesh Stationery', Payment_Mode: 'Cash', Amount: 9500, Vendor_Type: 'Non-MSME', MSME_Days: 0 },
+        { Voucher_Date: '2026-01-08', Party_Ledger: 'Shree Ganesh Stationery', Payment_Mode: 'Cash', Amount: 9500, Vendor_Type: 'Non-MSME', MSME_Days: 0 },
+        { Voucher_Date: '2026-01-12', Party_Ledger: 'Apex Packaging Enterprises', Payment_Mode: 'RTGS', Amount: 235000, Vendor_Type: 'MSME', MSME_Days: 62 },
+        { Voucher_Date: '2026-01-18', Party_Ledger: 'Vikas Consultancy LLP', Payment_Mode: 'Journal', Amount: 500000, Vendor_Type: 'Non-MSME', MSME_Days: 0 },
+        { Voucher_Date: '2026-01-25', Party_Ledger: 'Royal Catering Services', Payment_Mode: 'Cash', Amount: 9800, Vendor_Type: 'Non-MSME', MSME_Days: 0 },
+        { Voucher_Date: '2026-01-25', Party_Ledger: 'Royal Catering Services', Payment_Mode: 'Cash', Amount: 9200, Vendor_Type: 'Non-MSME', MSME_Days: 0 }
+      ];
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(sampleRows);
+      XLSX.utils.book_append_sheet(wb, ws, 'Ledger');
+      XLSX.writeFile(wb, 'AuditCore_Ledger_Template.xlsx');
+      showToast('Downloaded AuditCore_Ledger_Template.xlsx!', 'success');
+    }
+
+    function handleLedgerFile(file) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const data = new Uint8Array(ev.target.result);
+          const wb = XLSX.read(data, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rawRows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+          const rows = rawRows.map(r => {
+            const date = normalizeDate(pickCol(r, ['Date', 'Voucher Date', 'Voucher_Date', 'Txn Date', 'Posting Date']));
+            const party = String(pickCol(r, ['Party', 'Party_Ledger', 'Particulars', 'Ledger', 'Vendor', 'Account Name']) || 'Unknown Party').trim();
+            const mode = String(pickCol(r, ['Mode', 'Payment Mode', 'Payment_Mode', 'Voucher Type', 'Type']) || 'NEFT').trim();
+            const rawAmt = String(pickCol(r, ['Amount', 'Debit', 'Value', 'Net Amount', 'Total']) || '0').replace(/[^0-9.-]/g, '');
+            const amount = Math.abs(parseFloat(rawAmt) || 0);
+
+            let msmeDays = parseInt(pickCol(r, ['MSME_Days', 'MSME Days', 'Overdue Days', 'Days'])) || 0;
+            if (!msmeDays) {
+              const invDate = normalizeDate(pickCol(r, ['Invoice Date', 'Invoice_Date', 'Bill Date']));
+              const payDate = normalizeDate(pickCol(r, ['Payment Date', 'Payment_Date', 'Paid Date']));
+              const vType = String(pickCol(r, ['MSME', 'Vendor Type', 'Vendor_Type'])).toLowerCase();
+              if (invDate && payDate && (vType.includes('msme') || vType.includes('micro') || vType.includes('small') || vType === 'yes')) {
+                msmeDays = Math.max(0, Math.round((new Date(payDate) - new Date(invDate)) / 86400000));
+              }
+            }
+            return { date, party, mode, amount, msmeDays };
+          }).filter(r => r.amount > 0);
+
+          if (!rows.length) {
+            showToast('No valid ledger rows found. Try downloading the .xlsx template.', 'warn');
+            return;
+          }
+          document.getElementById('forensic-file-status').textContent = `Loaded: ${file.name} (${rows.length} rows parsed locally)`;
+          analyzeLedger(rows);
+          showToast(`Parsed ${rows.length} rows from ${file.name}!`, 'success');
+        } catch (err) {
+          showToast('Error reading Excel/CSV file. Please verify format.', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function loadDemoLedger() {
+      const demo = [
+        { date: '2026-01-05', party: 'Bharat Logistics Pvt Ltd', mode: 'NEFT', amount: 145200, msmeDays: 12 },
+        { date: '2026-01-08', party: 'Shree Ganesh Stationery', mode: 'Cash', amount: 9500, msmeDays: 0 },
+        { date: '2026-01-08', party: 'Shree Ganesh Stationery', mode: 'Cash', amount: 9500, msmeDays: 0 },
+        { date: '2026-01-12', party: 'Apex Packaging Enterprises', mode: 'RTGS', amount: 235000, msmeDays: 62 },
+        { date: '2026-01-18', party: 'Vikas Consultancy LLP', mode: 'Journal', amount: 500000, msmeDays: 0 },
+        { date: '2026-01-22', party: 'Precision Micro Tools Pvt Ltd', mode: 'NEFT', amount: 175000, msmeDays: 54 },
+        { date: '2026-01-25', party: 'Royal Catering Services', mode: 'Cash', amount: 9800, msmeDays: 0 },
+        { date: '2026-01-25', party: 'Royal Catering Services', mode: 'Cash', amount: 9200, msmeDays: 0 },
+        { date: '2026-02-08', party: 'Starlight Events Enterprises', mode: 'Journal', amount: 900000, msmeDays: 0 },
+        { date: '2026-02-14', party: 'Surya Print & Pack', mode: 'NEFT', amount: 92000, msmeDays: 71 },
+        { date: '2026-02-20', party: 'National Security Services', mode: 'NEFT', amount: 74500, msmeDays: 10 },
+        { date: '2026-02-23', party: 'Modern Electricals', mode: 'Cash', amount: 9400, msmeDays: 0 },
+        { date: '2026-03-01', party: 'Alpha Advisory LLP', mode: 'Journal', amount: 800000, msmeDays: 0 },
+        { date: '2026-03-10', party: 'Lakshmi Yarn Industries', mode: 'RTGS', amount: 289000, msmeDays: 22 },
+        { date: '2026-03-19', party: 'Prime Fuel Station', mode: 'Cash', amount: 9600, msmeDays: 0 }
+      ];
+      analyzeLedger(demo);
+      showToast('Forensic Radar: Sample ledger scanned!', 'success');
+    }
+
+    function analyzeLedger(rows) {
+      const flags = [];
+      let exposure = 0;
+
+      // Sec 40A(3) Split Cash
+      const cashMap = {};
+      rows.forEach(r => {
+        if (r.mode.toLowerCase() === 'cash') {
+          const k = `${r.date}|${r.party}`;
+          if (!cashMap[k]) cashMap[k] = { date: r.date, party: r.party, total: 0, count: 0 };
+          cashMap[k].total += r.amount;
+          cashMap[k].count++;
+        }
+      });
+      Object.values(cashMap).forEach(b => {
+        if (b.total > 10000) {
+          flags.push({ date: b.date, party: b.party, amount: b.total, rule: `Sec 40A(3) Split Cash (${b.count} txns)`, sev: 'high' });
+          exposure += b.total;
+        }
+      });
+
+      // Sec 43B(h) MSME > 45 days & Sunday Round-Figure Journals
+      rows.forEach(r => {
+        if (r.msmeDays > 45) {
+          flags.push({ date: r.date, party: r.party, amount: r.amount, rule: `Sec 43B(h) MSME Overdue (${r.msmeDays}d)`, sev: 'high' });
+          exposure += r.amount;
+        }
+        if (new Date(r.date).getDay() === 0 && r.mode.toLowerCase() === 'journal' && r.amount >= 100000 && r.amount % 10000 === 0) {
+          flags.push({ date: r.date, party: r.party, amount: r.amount, rule: 'Sunday Round-Figure Journal', sev: 'warn' });
+        }
+      });
+
+      currentLedgerFlags = flags;
+      document.getElementById('kpi-total-tx').textContent = rows.length;
+      document.getElementById('kpi-flags').textContent = flags.length;
+      document.getElementById('kpi-exposure').textContent = formatINR(exposure);
+      document.getElementById('kpi-score').textContent = Math.max(25, Math.round(100 - (flags.length / Math.max(1, rows.length)) * 120)) + '%';
+      document.getElementById('flag-count-pill').textContent = `${flags.length} Flags`;
+
+      document.getElementById('forensic-flags-body').innerHTML = flags.map(f => `
+        <tr class="hover:bg-slate-800/40">
+          <td class="py-2.5 px-3 font-mono text-slate-300">${f.date}</td>
+          <td class="py-2.5 px-3 font-medium text-white">${f.party}</td>
+          <td class="py-2.5 px-3 font-semibold text-amber-300">${formatINR(f.amount)}</td>
+          <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-semibold ${f.sev === 'high' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'}">${f.rule}</span></td>
+        </tr>
+      `).join('');
+
+      // Benford's Law Chart
+      const expected = [30.1, 17.6, 12.5, 9.7, 7.9, 6.7, 5.8, 5.1, 4.6];
+      const counts = Array(9).fill(0);
+      let valid = 0;
+      rows.forEach(r => {
+        const d = parseInt(String(Math.abs(r.amount)).replace(/^0+/, '')[0]);
+        if (d >= 1 && d <= 9) { counts[d - 1]++; valid++; }
+      });
+      const actual = counts.map(c => valid ? Number(((c / valid) * 100).toFixed(1)) : 0);
+      const anomaly = actual.some((v, i) => Math.abs(v - expected[i]) > 9);
+
+      const badge = document.getElementById('benford-badge');
+      badge.textContent = anomaly ? 'DIGIT 9 ANOMALY' : 'NORMAL CURVE';
+      badge.className = anomaly
+        ? 'text-[10px] font-bold px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30'
+        : 'text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+
+      const ctx = document.getElementById('benfordChart').getContext('2d');
+      if (benfordChart) benfordChart.destroy();
+      benfordChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['1','2','3','4','5','6','7','8','9'],
+          datasets: [
+            { label: 'Actual (%)', data: actual, backgroundColor: actual.map((v, i) => Math.abs(v - expected[i]) > 9 ? 'rgba(239,68,68,0.85)' : 'rgba(99,102,241,0.75)'), borderRadius: 6 },
+            { label: 'Benford Expected (%)', data: expected, type: 'line', borderColor: '#10b981', backgroundColor: '#10b981', borderWidth: 2, tension: 0.35, pointRadius: 3 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+          scales: {
+            x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+            y: { ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+          }
+        }
+      });
+    }
+
+    function generateForensicWP() {
+      if (!currentLedgerFlags.length) { showToast('Upload a ledger CSV (or enable Demo Mode in Settings) first.', 'warn'); return; }
+      const raw = `Client: Navbharat Manufacturing Pvt Ltd (PAN: AABCN4512K, GSTIN: 09AABCN4512K1Z5)\nFlags:\n` + currentLedgerFlags.map(f => `- ${f.date} | ${f.party} | ₹${f.amount} | ${f.rule}`).join('\n');
+      runAIDraft(
+        'You are a Senior Indian Chartered Accountant drafting a Form 3CD Tax Audit Working Paper.',
+        raw, 'forensic-ai-output', 'btn-gen-forensic',
+        () => `### 1. Form 3CD Clause-Wise Reporting Remarks
+- **Clause 21(d) — Disallowance u/s 40A(3):** Aggregate cash payments exceeding ₹10,000 in a single day to **Shree Ganesh Stationery (₹19,000)** and **Royal Catering Services (₹19,000)** via split vouchers are 100% disallowable under Section 40A(3) of the Income-tax Act, 1961.
+- **Clause 22 — MSME Overdue Disallowance u/s 43B(h):** Payments to Micro/Small enterprises (**Apex Packaging Enterprises — 62 days**, **Precision Micro Tools Pvt Ltd — 54 days**, **Surya Print & Pack — 71 days**) exceeded the statutory 45-day limit. Total exposure of **₹5,02,000** is disallowable in FY 2025-26 on an accrual basis.
+
+### 2. Forensic Observation (Benford's Law & SA 240)
+- Leading **Digit 9** exhibits a severe spike above Benford's natural 4.6% benchmark, directly corroborating intentional invoice splitting below the ₹10,000 cash threshold.
+- Three high-value **Sunday Round-Figure Journal Entries** (₹5,00,000 to ₹9,00,000) indicate potential management override of internal controls (SA 240).
+
+### 3. Management Representation Queries
+- Provide signed Udyam Registration certificates and written credit agreements for all flagged MSME vendors.
+- Furnish underlying supporting invoices, board approvals, and business justification for all Sunday journal vouchers.`
+      );
+    }
+
+    // =========================================================================
+    // 6. MODULE 2: RPT-GRAPH (REAL EXCEL/CSV WORKBOOK & SEPARATE FILE PARSING)
+    // =========================================================================
+    function downloadRPTTemplate() {
+      const vendors = [
+        { ID: 'V1', Name: 'Shakti Logistics Pvt Ltd', Bank_Account: '50100234981234', Phone: '9123456780', Address: 'Plot 8, Kanpur Rd', Billed_Amount: '₹18,00,000 (31-Mar)' },
+        { ID: 'V2', Name: 'Verma Advisory Enterprises', Bank_Account: '60200112233445', Phone: '9839011223', Address: '14 Gomti Nagar, Lucknow', Billed_Amount: '₹12,00,000 (31-Mar)' },
+        { ID: 'V3', Name: 'Infosys Cloud Services', Bank_Account: '70100887766554', Phone: '9000012345', Address: 'Bengaluru', Billed_Amount: '₹4,50,000' }
+      ];
+      const employees = [
+        { ID: 'D1', Name: 'Rajesh Verma (Director)', Bank_Account: '50100234981234', Phone: '9839011223', Address: '14 Gomti Nagar, Lucknow' },
+        { ID: 'D2', Name: 'Ananya Sharma (CFO)', Bank_Account: '50100998877665', Phone: '9839044556', Address: '22 Hazratganj, Lucknow' }
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(vendors), 'Vendors');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(employees), 'Employees');
+      XLSX.writeFile(wb, 'AuditCore_RPT_Template.xlsx');
+      showToast('Downloaded AuditCore_RPT_Template.xlsx!', 'success');
+    }
+
+    function mapEntityRows(rawRows, prefix) {
+      return rawRows.map((r, i) => ({
+        id: String(pickCol(r, ['ID', 'Code']) || `${prefix}${i + 1}`).trim(),
+        name: String(pickCol(r, ['Name', 'Vendor Name', 'Employee Name', 'Director Name', 'Party']) || `${prefix} ${i + 1}`).trim(),
+        bank: String(pickCol(r, ['Bank_Account', 'Bank Account', 'Bank', 'Account No', 'A/c']) || '').trim(),
+        phone: String(pickCol(r, ['Phone', 'Mobile', 'Contact']) || '').trim(),
+        address: String(pickCol(r, ['Address', 'Location']) || '').trim(),
+        billed: String(pickCol(r, ['Billed_Amount', 'Billed', 'Amount', 'Turnover']) || '').trim()
+      })).filter(x => x.name);
+    }
+
+    function handleRPTWorkbook(file) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+          const vSheet = wb.SheetNames.find(s => s.toLowerCase().includes('vendor')) || wb.SheetNames[0];
+          const eSheet = wb.SheetNames.find(s => s.toLowerCase().includes('emp') || s.toLowerCase().includes('dir')) || wb.SheetNames[1];
+          if (!eSheet) {
+            showToast('Workbook needs 2 sheets ("Vendors" & "Employees"), or use separate uploads.', 'warn');
+            return;
+          }
+          const vendors = mapEntityRows(XLSX.utils.sheet_to_json(wb.Sheets[vSheet], { defval: '' }), 'V');
+          const directors = mapEntityRows(XLSX.utils.sheet_to_json(wb.Sheets[eSheet], { defval: '' }), 'D');
+          document.getElementById('rpt-wb-status').textContent = `Loaded: ${file.name} (${vendors.length}V / ${directors.length}E)`;
+          runRPTMatching(directors, vendors);
+        } catch (err) {
+          showToast('Error parsing RPT workbook.', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function handleRPTSeparateFile(role, file) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+          if (role === 'vendors') {
+            separateRPTVendors = mapEntityRows(rows, 'V');
+            document.getElementById('rpt-v-status').textContent = `✓ ${file.name} (${separateRPTVendors.length})`;
+          } else {
+            separateRPTEmployees = mapEntityRows(rows, 'D');
+            document.getElementById('rpt-e-status').textContent = `✓ ${file.name} (${separateRPTEmployees.length})`;
+          }
+          if (separateRPTVendors.length && separateRPTEmployees.length) {
+            runRPTMatching(separateRPTEmployees, separateRPTVendors);
+          } else {
+            showToast(`Loaded ${role} file — now upload the other file to run cross-match.`, 'info');
+          }
+        } catch (err) {
+          showToast('Error reading RPT file.', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function runRPTMatching(directors, vendors) {
+      const edges = [], conflicts = [], flagged = new Set();
+      vendors.forEach(v => {
+        let matched = false;
+        directors.forEach(d => {
+          if (v.bank && d.bank && v.bank === d.bank) {
+            edges.push({ from: d.id, to: v.id, label: 'Shared Bank A/c', risk: true });
+            conflicts.push(`${v.name} shares Bank A/c (${v.bank}) with ${d.name}`);
+            flagged.add(v.id); matched = true;
+          } else if (v.phone && d.phone && v.phone === d.phone) {
+            edges.push({ from: d.id, to: v.id, label: 'Shared Phone', risk: true });
+            conflicts.push(`${v.name} shares Phone (${v.phone}) with ${d.name}`);
+            flagged.add(v.id); matched = true;
+          } else if (v.address && d.address && v.address.toLowerCase() === d.address.toLowerCase()) {
+            edges.push({ from: d.id, to: v.id, label: 'Shared Address', risk: true });
+            conflicts.push(`${v.name} shares Address (${v.address}) with ${d.name}`);
+            flagged.add(v.id); matched = true;
+          }
+        });
+        if (!matched && directors[0]) edges.push({ from: directors[directors.length - 1].id, to: v.id, label: 'Verified Clean', risk: false });
+      });
+
+      const nodes = [
+        ...directors.map((d, i) => ({ ...d, x: 0.24, y: (i + 1) / (directors.length + 1), status: 'director' })),
+        ...vendors.map((v, i) => ({ ...v, x: 0.74, y: (i + 1) / (vendors.length + 1), status: flagged.has(v.id) ? 'flagged' : 'safe' }))
+      ];
+
+      currentRPTData = { nodes, edges, conflicts };
+      document.getElementById('rpt-empty-msg').classList.add('hidden');
+      document.getElementById('rpt-conflicts-list').innerHTML = conflicts.length
+        ? conflicts.map(c => `<li class="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 font-medium">${c}</li>`).join('')
+        : '<li class="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-medium">No undisclosed RPT overlaps detected.</li>';
+      drawRPTGraph();
+      showToast(`RPT-Graph: ${conflicts.length} hidden Shell-Vendor link(s) exposed!`, conflicts.length ? 'warn' : 'success');
+    }
+
+    function loadDemoRPT() {
+      const directors = [
+        { id: 'D1', name: 'Rajesh Verma (Director)', bank: '50100234981234', phone: '9839011223', address: '14 Gomti Nagar, Lucknow' },
+        { id: 'D2', name: 'Ananya Sharma (CFO)', bank: '50100998877665', phone: '9839044556', address: '22 Hazratganj, Lucknow' }
+      ];
+      const vendors = [
+        { id: 'V1', name: 'Shakti Logistics Pvt Ltd', bank: '50100234981234', phone: '9123456780', address: 'Plot 8, Kanpur Rd', billed: '₹18,00,000 (31-Mar)' },
+        { id: 'V2', name: 'Verma Advisory Enterprises', bank: '60200112233445', phone: '9839011223', address: '14 Gomti Nagar, Lucknow', billed: '₹12,00,000 (31-Mar)' },
+        { id: 'V3', name: 'Infosys Cloud Services', bank: '70100887766554', phone: '9000012345', address: 'Bengaluru', billed: '₹4,50,000' },
+        { id: 'V4', name: 'Bharat Steel Traders', bank: '80100334455667', phone: '9111122233', address: 'Kanpur', billed: '₹9,25,000' }
+      ];
+      runRPTMatching(directors, vendors);
+    }
+
+    function drawRPTGraph(selId = null) {
+      const wrap = document.getElementById('rpt-canvas-wrap');
+      const canvas = document.getElementById('rptCanvas');
+      canvas.width = wrap.clientWidth; canvas.height = wrap.clientHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      currentRPTData.edges.forEach(e => {
+        const n1 = currentRPTData.nodes.find(n => n.id === e.from);
+        const n2 = currentRPTData.nodes.find(n => n.id === e.to);
+        const x1 = n1.x * canvas.width, y1 = n1.y * canvas.height;
+        const x2 = n2.x * canvas.width, y2 = n2.y * canvas.height;
+
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+        ctx.strokeStyle = e.risk ? '#ef4444' : 'rgba(16, 185, 129, 0.35)';
+        ctx.lineWidth = e.risk ? 2.6 : 1.5;
+        if (e.risk) ctx.setLineDash([6, 4]);
+        ctx.stroke(); ctx.setLineDash([]);
+
+        if (e.risk) {
+          ctx.fillStyle = '#fca5a5'; ctx.font = '600 11px Inter'; ctx.textAlign = 'center';
+          ctx.fillText(e.label, (x1 + x2) / 2, (y1 + y2) / 2 - 8);
+        }
+      });
+
+      currentRPTData.nodes.forEach(n => {
+        const cx = n.x * canvas.width, cy = n.y * canvas.height;
+        const r = selId === n.id ? 23 : 19;
+        const color = n.status === 'director' ? '#38bdf8' : n.status === 'flagged' ? '#ef4444' : '#10b981';
+
+        ctx.save();
+        ctx.shadowColor = color; ctx.shadowBlur = n.status === 'flagged' ? 18 : 10;
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#0f172a'; ctx.fill();
+        ctx.lineWidth = 3; ctx.strokeStyle = color; ctx.stroke();
+        ctx.restore();
+
+        ctx.fillStyle = '#ffffff'; ctx.font = '700 11px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(n.id, cx, cy);
+        ctx.fillStyle = '#e2e8f0'; ctx.font = '500 11px Inter';
+        ctx.fillText(n.name, cx, cy + r + 13);
+      });
+    }
+
+    document.getElementById('rptCanvas').addEventListener('click', e => {
+      const c = e.target, rect = c.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const hit = currentRPTData.nodes.find(n => Math.hypot(mx - n.x * c.width, my - n.y * c.height) <= 25);
+      if (hit) {
+        drawRPTGraph(hit.id);
+        document.getElementById('rpt-inspector').innerHTML = `
+          <div class="font-bold text-white text-sm mb-1">${hit.name}</div>
+          <p><strong>Bank A/c:</strong> <span class="font-mono text-cyan-300">${hit.bank}</span></p>
+          <p><strong>Phone:</strong> <span class="font-mono">${hit.phone}</span></p>
+          <p><strong>Address:</strong> ${hit.address}</p>
+          ${hit.billed ? `<p><strong>Billed:</strong> <span class="text-amber-300 font-semibold">${hit.billed}</span></p>` : ''}
+        `;
+      }
+    });
+
+    function generateRPTMemo() {
+      if (!currentRPTData.conflicts.length) { showToast('Load Vendor & Director data first.', 'warn'); return; }
+      const raw = `Undisclosed Related Party Indicators:\n` + currentRPTData.conflicts.join('\n');
+      runAIDraft(
+        'You are a Statutory Auditor drafting an SA 550 & Sec 188 Audit Risk Memo.',
+        raw, 'rpt-ai-output', 'btn-gen-rpt',
+        () => `### 1. SA 550 Undisclosed Related-Party Risk Summary
+- **Shakti Logistics Pvt Ltd (₹18,00,000 billed on 31-Mar):** Shares identical Bank Account (**50100234981234**) with Director **Rajesh Verma**.
+- **Verma Advisory Enterprises (₹12,00,000 billed on 31-Mar):** Shares identical Phone Number (**9839011223**) and Residential Address with Director **Rajesh Verma**.
+
+### 2. Mandatory Audit Procedures (SA 550 & Sec 188)
+- Verify Form MBP-1 (Disclosure of Interest by Directors) and Register of Contracts (Form MBP-4) for non-disclosure.
+- Test arm's-length pricing and obtain proof of actual service/goods delivery for the ₹30,00,000 year-end round-figure billings.
+
+### 3. Formal Inquiry Letter to the Board
+- *"Dear Board of Directors, during our statutory audit procedures under SA 550, our forensic cross-matching identified undisclosed identity overlaps between Director Rajesh Verma and two vendors totaling ₹30,00,000. Kindly provide written clarification, Audit Committee ratification, and supporting delivery proofs within 5 working days."*`
+      );
+    }
+
+    // =========================================================================
+    // 7. MODULE 3: NOTICESHIELD (REAL PDF.JS MULTI-PAGE EXTRACTION)
+    // =========================================================================
+    async function handleNoticePDF(file) {
+      if (!window.pdfjsLib) { showToast('PDF.js library not loaded.', 'error'); return; }
+      const statusEl = document.getElementById('notice-pdf-status');
+      statusEl.textContent = `Extracting text from ${file.name} locally...`;
+      try {
+        const buffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+        let fullText = '';
+        for (let p = 1; p <= pdf.numPages; p++) {
+          const page = await pdf.getPage(p);
+          const content = await page.getTextContent();
+          fullText += content.items.map(it => it.str).join(' ') + '\n\n';
+        }
+        document.getElementById('notice-input').value = fullText.trim();
+        statusEl.textContent = `✓ Extracted ${pdf.numPages} page(s) from ${file.name} locally`;
+        runNoticeKillSwitch();
+        showToast(`Extracted ${pdf.numPages} PDF page(s) & ran Kill-Switch!`, 'success');
+      } catch (err) {
+        statusEl.textContent = 'Failed to parse PDF. Try a text-based PDF or paste text directly.';
+        showToast('Could not extract text from PDF.', 'error');
+      }
+    }
+
+    function loadDemoNotice(type) {
+      const box = document.getElementById('notice-input');
+      if (type === 'gst') {
+        box.value = `FORM GST ASMT-10
+Office of the Assistant Commissioner of State Tax, Lucknow
+DIN: CBIC-2026-091234567890 | Date of Issue: 15-11-2026
+To: Navbharat Manufacturing Pvt Ltd (GSTIN: 09AABCN4512K1Z5)
+Financial Year: 2019-20
+
+Subject: Scrutiny discrepancy u/s 61 & proposed demand u/s 73 of CGST Act, 2017.
+Excess ITC (GSTR-3B vs 2A): ₹4,20,000
+Interest @ 18%: ₹1,80,000
+Total Demand Proposed: ₹6,50,000`;
+      } else {
+        box.value = `INCOME TAX DEPARTMENT — NOTICE U/S 143(2)
+Income Tax Officer, Ward 2(1), Lucknow | Date: 10-10-2026
+To: Rajesh Verma (PAN: ABCDE1234F) | AY: 2025-26
+
+Subject: Scrutiny Notice for cash deposits of ₹8,50,000.
+Note: Issued manually without a computer-generated DIN due to portal downtime.`;
+      }
+      runNoticeKillSwitch();
+      showToast('NoticeShield: Technical kill-switch executed!', 'info');
+    }
+
+    function runNoticeKillSwitch() {
+      const t = document.getElementById('notice-input').value;
+      if (!t.trim()) return;
+
+      const hasDIN = /(DIN\s*[:\-]?\s*(CBIC|ITBA|[A-Z0-9\-]{12,25}))/i.test(t);
+      const timeBarred = /Financial Year\s*[:\-]?\s*(2017-18|2018-19|2019-20|2020-21)/i.test(t) && /73/i.test(t);
+      const mathErr = t.includes('4,20,000') && t.includes('1,80,000') && t.includes('6,50,000');
+
+      const setBadge = (id, detId, bad, badTxt, okTxt, badDet, okDet) => {
+        const b = document.getElementById(id);
+        b.textContent = bad ? badTxt : okTxt;
+        b.className = bad
+          ? 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30'
+          : 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+        document.getElementById(detId).textContent = bad ? badDet : okDet;
+      };
+
+      setBadge('din-badge', 'din-detail', !hasDIN, 'MISSING DIN (VOID)', 'DIN PRESENT', 'Invalid per CBDT Circular 19/2019!', 'Valid DIN string detected.');
+      setBadge('timebar-badge', 'timebar-detail', timeBarred, 'TIME-BARRED!', 'WITHIN LIMIT', 'Crossed CGST Sec 73(10) deadline!', 'Within statutory limitation.');
+      setBadge('math-badge', 'math-detail', mathErr, 'MATH MISMATCH', 'VERIFIED', '₹4.2L + ₹1.8L = ₹6.0L (Claims ₹6.5L)', 'No arithmetic error found.');
+
+      currentNoticeDiag = { hasDIN, timeBarred, mathErr };
+    }
+
+    function generateNoticeReply() {
+      const t = document.getElementById('notice-input').value.trim();
+      if (!t) { showToast('Paste a notice first.', 'warn'); return; }
+      runAIDraft(
+        'You are an Indian Tax Advocate / CA drafting a point-by-point legal reply to a statutory notice.',
+        t, 'notice-ai-output', 'btn-gen-notice',
+        () => `### Preliminary Technical Objections (Without Prejudice)
+${currentNoticeDiag.timeBarred ? '- **Notice Barred by Limitation (CGST Sec 73(10)):** The impugned notice pertains to **FY 2019-20** and is issued on 15-11-2026, well beyond the statutory limitation period prescribed under Section 73(10) of the CGST Act, 2017. Consequently, the proceedings are void ab initio and liable to be dropped.' : ''}
+${!currentNoticeDiag.hasDIN ? '- **Invalid Notice — Missing Mandatory DIN:** Per **CBDT Circular No. 19/2019**, any manual communication issued without a computer-generated Document Identification Number (DIN) is treated as invalid and *non-est* in the eyes of law.' : ''}
+${currentNoticeDiag.mathErr ? '- **Apparent Arithmetic Error:** The notice computes Tax (₹4,20,000) + Interest (₹1,80,000) as ₹6,50,000 instead of ₹6,00,000, reflecting non-application of mind.' : ''}
+
+### Client Evidence Checklist
+- Copies of filed **GSTR-3B**, **GSTR-2A/2B**, and **GSTR-9** reconciliation for the relevant FY.
+- Supplier tax invoices, e-way bills, and bank payment proofs satisfying **Section 16(2)** conditions.`
+      );
+    }
+
+    // =========================================================================
+    // 8. MODULE 4: SCHED3-XRAY (REAL EXCEL/CSV + DOWNLOAD TEMPLATE)
+    // =========================================================================
+    function downloadSched3Template() {
+      const ratios = [
+        { Ratio_Name: 'Current Ratio', FY_Prev: 1.85, FY_Curr: 1.22, Unit: 'x' },
+        { Ratio_Name: 'Debt-Equity Ratio', FY_Prev: 0.65, FY_Curr: 1.15, Unit: 'x' },
+        { Ratio_Name: 'Debt Service Coverage Ratio', FY_Prev: 2.40, FY_Curr: 1.65, Unit: 'x' },
+        { Ratio_Name: 'Return on Equity (ROE)', FY_Prev: 14.5, FY_Curr: 15.8, Unit: '%' },
+        { Ratio_Name: 'Inventory Turnover Ratio', FY_Prev: 6.20, FY_Curr: 4.10, Unit: 'x' }
+      ];
+      const caro = [
+        { Statutory_Due: 'Employees Provident Fund (EPF)', Amount: 145000, Months_Overdue: 8 },
+        { Statutory_Due: 'TDS u/s 194J (Prof. Fees)', Amount: 82000, Months_Overdue: 7 },
+        { Statutory_Due: 'GST Output Liability', Amount: 0, Months_Overdue: 0 }
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ratios), 'Ratios');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(caro), 'CARO_Dues');
+      XLSX.writeFile(wb, 'AuditCore_Sched3_Template.xlsx');
+      showToast('Downloaded AuditCore_Sched3_Template.xlsx!', 'success');
+    }
+
+    function handleSched3File(file) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+          const rSheet = wb.SheetNames.find(s => s.toLowerCase().includes('ratio') || s.toLowerCase().includes('fin')) || wb.SheetNames[0];
+          const cSheet = wb.SheetNames.find(s => s.toLowerCase().includes('caro') || s.toLowerCase().includes('due'));
+
+          const rawRatios = XLSX.utils.sheet_to_json(wb.Sheets[rSheet], { defval: '' });
+          const ratios = rawRatios.map(r => {
+            const name = String(pickCol(r, ['Ratio_Name', 'Ratio', 'Metric', 'Particulars']) || 'Ratio').trim();
+            const fy25 = parseFloat(pickCol(r, ['FY_Prev', 'FY 2024-25', 'Previous', 'Prev'])) || 0;
+            const fy26 = parseFloat(pickCol(r, ['FY_Curr', 'FY 2025-26', 'Current', 'Curr'])) || 0;
+            const u = String(pickCol(r, ['Unit', 'Type']) || 'x').trim();
+            const variance = fy25 ? Number((((fy26 - fy25) / fy25) * 100).toFixed(1)) : 0;
+            return { name, fy25, fy26, u, variance, flag: Math.abs(variance) > 25 };
+          }).filter(r => r.name);
+
+          let caroDues = [];
+          if (cSheet) {
+            const rawCaro = XLSX.utils.sheet_to_json(wb.Sheets[cSheet], { defval: '' });
+            caroDues = rawCaro.map(d => {
+              const m = parseInt(pickCol(d, ['Months_Overdue', 'Months', 'Overdue'])) || 0;
+              return {
+                name: String(pickCol(d, ['Statutory_Due', 'Due', 'Name', 'Nature']) || 'Statutory Due').trim(),
+                amt: parseFloat(pickCol(d, ['Amount', 'Arrears', 'Value'])) || 0,
+                m, flag: m > 6
+              };
+            });
+          }
+
+          document.getElementById('sched3-file-status').textContent = `Loaded: ${file.name} (${ratios.length} ratios parsed locally)`;
+          renderSched3Results(ratios, caroDues);
+          showToast(`Parsed ${ratios.length} ratios from ${file.name}!`, 'success');
+        } catch (err) {
+          showToast('Error parsing Schedule III file.', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function renderSched3Results(ratios, caroDues) {
+      currentSched3Data = { ratios, caroDues };
+
+      document.getElementById('sched3-ratios-body').innerHTML = ratios.map(r => `
+        <tr class="hover:bg-slate-800/40">
+          <td class="py-2.5 px-3 font-medium text-white">${r.name}</td>
+          <td class="py-2.5 px-3 font-mono text-slate-300">${r.fy25}${r.u}</td>
+          <td class="py-2.5 px-3 font-mono text-slate-300">${r.fy26}${r.u}</td>
+          <td class="py-2.5 px-3 font-mono font-bold ${r.flag ? 'text-rose-400' : 'text-emerald-400'}">${r.variance > 0 ? '+' : ''}${r.variance}%</td>
+          <td class="py-2.5 px-3">${r.flag ? '<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">EXPLANATION MANDATORY (&gt;25%)</span>' : '<span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">COMPLIANT</span>'}</td>
+        </tr>
+      `).join('');
+
+      const badCount = caroDues.filter(d => d.flag).length;
+      const cb = document.getElementById('caro-badge');
+      cb.textContent = caroDues.length ? `${badCount} Reportable Arrears (>6m)` : 'NO CARO SHEET';
+      cb.className = badCount
+        ? 'text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30'
+        : 'text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+
+      document.getElementById('caro-dues-grid').innerHTML = caroDues.length ? caroDues.map(d => `
+        <div class="bg-[#090d16] border ${d.flag ? 'border-rose-500/40' : 'border-slate-800'} rounded-xl p-3.5">
+          <div class="font-semibold text-white">${d.name}</div>
+          <div class="mt-1.5 flex items-center justify-between">
+            <span class="font-mono text-amber-300 font-semibold">${formatINR(d.amt)}</span>
+            <span class="text-[11px] font-bold ${d.flag ? 'text-rose-400' : 'text-emerald-400'}">${d.flag ? `${d.m}m Overdue` : 'Compliant'}</span>
+          </div>
+        </div>
+      `).join('') : '<div class="bg-[#090d16] border border-slate-800 rounded-xl p-3 text-slate-400 col-span-full">Upload a workbook with a "CARO_Dues" sheet (use Download Template) to audit statutory arrears.</div>';
+    }
+
+    function loadDemoSched3() {
+      const ratios = [
+        { name: 'Current Ratio', fy25: 1.85, fy26: 1.22, u: 'x' },
+        { name: 'Debt-Equity Ratio', fy25: 0.65, fy26: 1.15, u: 'x' },
+        { name: 'Debt Service Coverage Ratio', fy25: 2.40, fy26: 1.65, u: 'x' },
+        { name: 'Return on Equity (ROE)', fy25: 14.5, fy26: 15.8, u: '%' },
+        { name: 'Inventory Turnover Ratio', fy25: 6.20, fy26: 4.10, u: 'x' },
+        { name: 'Trade Receivables Turnover', fy25: 5.80, fy26: 6.10, u: 'x' },
+        { name: 'Net Profit Ratio', fy25: 8.40, fy26: 9.10, u: '%' }
+      ].map(r => {
+        const v = Number((((r.fy26 - r.fy25) / r.fy25) * 100).toFixed(1));
+        return { ...r, variance: v, flag: Math.abs(v) > 25 };
+      });
+
+      const caroDues = [
+        { name: 'Employees Provident Fund (EPF)', amt: 145000, m: 8, flag: true },
+        { name: 'TDS u/s 194J (Prof. Fees)', amt: 82000, m: 7, flag: true },
+        { name: 'GST Output Liability', amt: 0, m: 0, flag: false },
+        { name: 'ESI Contribution', amt: 12000, m: 2, flag: false }
+      ];
+
+      renderSched3Results(ratios, caroDues);
+      showToast('Sched3-XRay: Ratios & CARO 2020 arrears calculated!', 'success');
+    }
+
+    function generateSched3Note() {
+      if (!currentSched3Data.ratios.length) { showToast('Load 2-year financials first.', 'warn'); return; }
+      const raw = `Flagged Ratios (>25%): Current Ratio (-34.1%), Debt-Equity (+76.9%), DSCR (-31.3%), Inventory Turnover (-33.9%).\nCARO 2020 Dues > 6m: EPF ₹1,45,000 (8m), TDS 194J ₹82,000 (7m).`;
+      runAIDraft(
+        'You are an Indian Statutory Auditor drafting Schedule III Notes & CARO 2020 Clause 3(vii)(a) remarks.',
+        raw, 'sched3-ai-output', 'btn-gen-sched3',
+        () => `### 1. Schedule III Analytical Ratio Variance Explanations (>25%)
+- **Current Ratio (-34.1%):** Declined from 1.85x to 1.22x primarily due to higher short-term working capital utilization and increase in trade payables at year-end.
+- **Debt-Equity Ratio (+76.9%):** Increased from 0.65x to 1.15x on account of new term loan availed during FY 2025-26 for plant capacity expansion.
+- **Debt Service Coverage Ratio (-31.3%):** Moderated from 2.40x to 1.65x due to higher scheduled principal and interest obligations on fresh borrowings.
+- **Inventory Turnover Ratio (-33.9%):** Reduced from 6.20x to 4.10x due to strategic raw material stockpiling ahead of Q1 FY 2026-27 orders.
+
+### 2. CARO 2020 — Clause 3(vii)(a) Reporting Paragraph
+- *"According to the information and explanations given to us, undisputed statutory dues in respect of **Employees Provident Fund (₹1,45,000 — 8 months overdue)** and **TDS u/s 194J (₹82,000 — 7 months overdue)** were in arrears as at March 31, 2026 for a period of more than six months from the date they became payable."*`
+      );
+    }
+
+    window.addEventListener('resize', () => {
+      if (!document.getElementById('module-rpt').classList.contains('hidden') && currentRPTData.nodes.length) drawRPTGraph();
+    });
+
+    // Initialize all drag-and-drop upload zones on load
+    window.addEventListener('DOMContentLoaded', () => {
+      setupDropZone('drop-forensic', handleLedgerFile);
+      setupDropZone('drop-rpt-workbook', handleRPTWorkbook);
+      setupDropZone('drop-notice-pdf', handleNoticePDF);
+      setupDropZone('drop-sched3', handleSched3File);
+    });
+  </script>
+</body>
+</html>
