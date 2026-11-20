@@ -35,16 +35,16 @@
 
   <style>
     body {
-      background-color: #090d16;
-      color: #f1f5f9;
+      background-color: #f4f6fa;
+      color: #0f172a;
       font-family: 'Inter', system-ui, sans-serif;
     }
 
     /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #090d16; }
-    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
-    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
     /* Subtle Glow Animations */
     @keyframes shield-pulse {
@@ -54,22 +54,128 @@
     .shield-active { animation: shield-pulse 2.2s infinite; }
 
     /* AI Markdown Output Styling */
-    .ai-output h3 { font-size: 0.95rem; font-weight: 700; color: #38bdf8; margin-top: 1rem; margin-bottom: 0.4rem; }
-    .ai-output h4 { font-size: 0.875rem; font-weight: 600; color: #a5b4fc; margin-top: 0.75rem; margin-bottom: 0.25rem; }
+    .ai-output h3 { font-size: 0.95rem; font-weight: 700; color: #0f766e; margin-top: 1rem; margin-bottom: 0.4rem; }
+    .ai-output h4 { font-size: 0.875rem; font-weight: 600; color: #1d4ed8; margin-top: 0.75rem; margin-bottom: 0.25rem; }
     .ai-output ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.5rem; }
     .ai-output li { margin-bottom: 0.25rem; }
-    .ai-output strong { color: #f8fafc; }
+    .ai-output strong { color: #0f172a; }
     .ai-output p { margin-bottom: 0.5rem; line-height: 1.6; }
 
     /* Drag-and-Drop Upload Zone */
     .drop-zone {
-      border: 1.5px dashed #334155;
+      border: 1.5px dashed #94a3b8;
       transition: all 0.2s ease;
     }
     .drop-zone.drag-over {
-      border-color: #22d3ee;
-      background-color: rgba(34, 211, 238, 0.08);
+      border-color: #0d9488;
+      background-color: rgba(13, 148, 136, 0.08);
       transform: scale(1.005);
+    }
+
+    /* Executive Light Theme Overrides (Colors Only — Layout & Logic 100% Unchanged) */
+    body.light-theme #sidebar {
+      background-color: #0f172a !important;
+      border-right-color: #1e293b !important;
+    }
+    body.light-theme #sidebar .bg-\[\#0f172a\] {
+      background-color: #1e293b !important;
+      border-color: #334155 !important;
+    }
+    body.light-theme header {
+      background-color: rgba(255, 255, 255, 0.94) !important;
+      border-bottom-color: #e2e8f0 !important;
+    }
+    body.light-theme header h2,
+    body.light-theme main h1,
+    body.light-theme main h3,
+    body.light-theme main h4,
+    body.light-theme main .text-white {
+      color: #0f172a !important;
+    }
+    body.light-theme main .bg-gradient-to-br {
+      background-image: linear-gradient(to bottom right, #ffffff, #f0fdfa, #eff6ff) !important;
+      border-color: #cbd5e1 !important;
+    }
+    body.light-theme main .bg-\[\#0f172a\] {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    }
+    body.light-theme main .hover\:bg-\[\#152038\]:hover {
+      background-color: #f8fafc !important;
+    }
+    body.light-theme main .bg-\[\#090d16\],
+    body.light-theme main .bg-\[\#060911\],
+    body.light-theme .modal-overlay .bg-\[\#090d16\] {
+      background-color: #f8fafc !important;
+      border-color: #cbd5e1 !important;
+      color: #1e293b !important;
+    }
+    body.light-theme .modal-overlay .bg-\[\#0f172a\] {
+      background-color: #ffffff !important;
+      border-color: #cbd5e1 !important;
+    }
+    body.light-theme .modal-overlay h3,
+    body.light-theme .modal-overlay .text-white {
+      color: #0f172a !important;
+    }
+    body.light-theme header .bg-\[\#0f172a\] {
+      background-color: #f8fafc !important;
+      border-color: #cbd5e1 !important;
+    }
+    body.light-theme header .bg-\[\#0f172a\] .text-white {
+      color: #0f172a !important;
+    }
+    body.light-theme header .bg-slate-800\/80,
+    body.light-theme main .bg-slate-800 {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+      color: #0f172a !important;
+    }
+    body.light-theme header .bg-slate-800\/80:hover,
+    body.light-theme main .bg-slate-800:hover {
+      background-color: #e2e8f0 !important;
+    }
+    body.light-theme main .border-slate-800,
+    body.light-theme main .border-slate-800\/70,
+    body.light-theme main .divide-slate-800\/70 > :not([hidden]) ~ :not([hidden]) {
+      border-color: #e2e8f0 !important;
+    }
+    body.light-theme main .text-slate-400 {
+      color: #475569 !important;
+    }
+    body.light-theme main .text-slate-300,
+    body.light-theme main .text-slate-200 {
+      color: #1e293b !important;
+    }
+    body.light-theme main .text-cyan-300,
+    body.light-theme main .text-cyan-400 {
+      color: #0f766e !important;
+    }
+    body.light-theme main .text-indigo-300,
+    body.light-theme main .text-indigo-400 {
+      color: #1d4ed8 !important;
+    }
+    body.light-theme main .text-emerald-400 {
+      color: #047857 !important;
+    }
+    body.light-theme main .text-amber-300,
+    body.light-theme main .text-amber-400 {
+      color: #b45309 !important;
+    }
+    body.light-theme main .text-rose-400,
+    body.light-theme main .text-rose-300 {
+      color: #be123c !important;
+    }
+    body.light-theme main button.bg-emerald-600,
+    body.light-theme main button.bg-indigo-600,
+    body.light-theme main button.bg-cyan-600,
+    body.light-theme main button.from-indigo-600 {
+      color: #ffffff !important;
+    }
+    body.light-theme #rpt-inspector,
+    body.light-theme #rpt-inspector .text-white {
+      color: #0f172a !important;
     }
 
     /* Dedicated Print / PDF Audit Working Paper View */
@@ -91,7 +197,7 @@
     }
   </style>
 </head>
-<body class="min-h-screen overflow-x-hidden">
+<body class="light-theme min-h-screen overflow-x-hidden">
 
   <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
@@ -103,7 +209,7 @@
     <div style="border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: flex-end;">
       <div>
         <h1>AUDITCORE OS — AUDIT WORKING PAPER</h1>
-        <div style="font-size: 11px; color: #475569; margin-top: 2px;">ICAI AURATHON 2026 • Zero-Hallucination AI Practice Command Center</div>
+        <div style="font-size: 11px; color: #475569; margin-top: 2px;">ICAI AURATHON 2026 • Deterministic AI Practice Command Center</div>
       </div>
       <div style="text-align: right; font-size: 11px; color: #334155;">
         <div><strong>Ref No.:</strong> <span id="print-ref-no">AC-WP-2026-001</span></div>
@@ -215,7 +321,7 @@
       <div class="p-4 border-t border-slate-800/90">
         <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-3">
           <div class="flex items-center justify-between mb-1">
-            <span class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">Zero-Hallucination Engine</span>
+            <span class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">100% Deterministic Engine</span>
             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
           </div>
           <p class="text-[11px] text-slate-400 leading-relaxed">
@@ -287,7 +393,7 @@
                 ICAI AURATHON 2026 • Built by Aditya Kumar Singh (CA Intermediate)
               </span>
               <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-                Zero-Hallucination AI Practice Command Center for Chartered Accountants
+                Deterministic AI Practice Command Center for Chartered Accountants
               </h1>
               <p class="text-sm sm:text-base text-slate-400 leading-relaxed">
                 AuditCore OS separates <strong class="text-slate-200">deterministic statutory math</strong> from <strong class="text-slate-200">generative AI drafting</strong>, protected by an in-browser PII firewall—built for modern Indian CA firms.
@@ -297,12 +403,12 @@
 
           <!-- 3-Step Architecture Flow -->
           <div>
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">3-Stage Zero-Hallucination Architecture</h3>
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">3-Stage Verified Audit Architecture</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div class="bg-[#0f172a] border border-slate-800 rounded-2xl p-5">
                 <div class="flex items-center justify-between mb-3">
                   <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">STEP 1</span>
-                  <span class="text-xs font-semibold text-emerald-400">0% Hallucination</span>
+                  <span class="text-xs font-semibold text-emerald-400">100% Verified Math</span>
                 </div>
                 <h4 class="text-base font-bold text-white">Local Deterministic Math</h4>
                 <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Pure browser JS executes Benford’s Law, Sec 40A(3) cash splits, Sec 43B(h) MSME overdue checks, DIN/Limitation rules, and Schedule III ratios with 100% accuracy.</p>
@@ -1352,16 +1458,16 @@
         data: {
           labels: ['1','2','3','4','5','6','7','8','9'],
           datasets: [
-            { label: 'Actual (%)', data: actual, backgroundColor: actual.map((v, i) => Math.abs(v - expected[i]) > 9 ? 'rgba(239,68,68,0.85)' : 'rgba(99,102,241,0.75)'), borderRadius: 6 },
-            { label: 'Benford Expected (%)', data: expected, type: 'line', borderColor: '#10b981', backgroundColor: '#10b981', borderWidth: 2, tension: 0.35, pointRadius: 3 }
+            { label: 'Actual (%)', data: actual, backgroundColor: actual.map((v, i) => Math.abs(v - expected[i]) > 9 ? 'rgba(225,29,72,0.85)' : 'rgba(13,148,136,0.82)'), borderRadius: 6 },
+            { label: 'Benford Expected (%)', data: expected, type: 'line', borderColor: '#0f172a', backgroundColor: '#0f172a', borderWidth: 2, tension: 0.35, pointRadius: 3 }
           ]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+          plugins: { legend: { labels: { color: '#334155', font: { size: 11 } } } },
           scales: {
-            x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.04)' } },
-            y: { ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+            x: { ticks: { color: '#334155' }, grid: { color: 'rgba(15,23,42,0.06)' } },
+            y: { ticks: { color: '#334155', callback: v => v + '%' }, grid: { color: 'rgba(15,23,42,0.08)' } }
           }
         }
       });
@@ -1529,13 +1635,13 @@
         const x2 = n2.x * canvas.width, y2 = n2.y * canvas.height;
 
         ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-        ctx.strokeStyle = e.risk ? '#ef4444' : 'rgba(16, 185, 129, 0.35)';
+        ctx.strokeStyle = e.risk ? '#e11d48' : 'rgba(13, 148, 136, 0.45)';
         ctx.lineWidth = e.risk ? 2.6 : 1.5;
         if (e.risk) ctx.setLineDash([6, 4]);
         ctx.stroke(); ctx.setLineDash([]);
 
         if (e.risk) {
-          ctx.fillStyle = '#fca5a5'; ctx.font = '600 11px Inter'; ctx.textAlign = 'center';
+          ctx.fillStyle = '#be123c'; ctx.font = '700 11px Inter'; ctx.textAlign = 'center';
           ctx.fillText(e.label, (x1 + x2) / 2, (y1 + y2) / 2 - 8);
         }
       });
@@ -1543,18 +1649,18 @@
       currentRPTData.nodes.forEach(n => {
         const cx = n.x * canvas.width, cy = n.y * canvas.height;
         const r = selId === n.id ? 23 : 19;
-        const color = n.status === 'director' ? '#38bdf8' : n.status === 'flagged' ? '#ef4444' : '#10b981';
+        const color = n.status === 'director' ? '#0284c7' : n.status === 'flagged' ? '#e11d48' : '#0d9488';
 
         ctx.save();
-        ctx.shadowColor = color; ctx.shadowBlur = n.status === 'flagged' ? 18 : 10;
+        ctx.shadowColor = color; ctx.shadowBlur = n.status === 'flagged' ? 14 : 6;
         ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.fillStyle = '#0f172a'; ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.fill();
         ctx.lineWidth = 3; ctx.strokeStyle = color; ctx.stroke();
         ctx.restore();
 
-        ctx.fillStyle = '#ffffff'; ctx.font = '700 11px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#0f172a'; ctx.font = '700 11px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(n.id, cx, cy);
-        ctx.fillStyle = '#e2e8f0'; ctx.font = '500 11px Inter';
+        ctx.fillStyle = '#1e293b'; ctx.font = '600 11px Inter';
         ctx.fillText(n.name, cx, cy + r + 13);
       });
     }
